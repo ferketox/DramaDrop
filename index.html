@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DramaDrop</title>
+    <style>
+        /* CSS Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #e0d6d6;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .envelope-container {
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            z-index: 10;
+            position: relative;
+        }
+
+        .envelope-container:hover {
+            transform: scale(1.05);
+        }
+
+        .envelope-container.clicked {
+            animation: envelopeOpen 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes envelopeOpen {
+            0% {
+                transform: scale(1);
+                rotate: 0deg;
+            }
+            50% {
+                transform: scale(1.15);
+                rotate: 8deg;
+            }
+            100% {
+                transform: scale(1);
+                rotate: 0deg;
+            }
+        }
+
+        .envelope {
+            width: 240px;
+            height: 160px;
+            position: relative;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            height: 80px;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f3f4 100%);
+            border: 2px solid #dee2e6;
+            border-bottom: none;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            z-index: 2;
+        }
+
+        .envelope-body {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .stamp-area {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(108, 117, 125, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-align: center;
+            line-height: 1.2;
+            z-index: 3;
+        }
+
+        .stamp-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .address-lines {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            right: 90px;
+            z-index: 3;
+        }
+
+        .address-line {
+            height: 20px;
+            background: linear-gradient(90deg, #dee2e6 0%, transparent 100%);
+            margin: 8px 0;
+            border-radius: 1px;
+        }
+
+        .address-line:nth-child(1) { width: 80%; }
+        .address-line:nth-child(2) { width: 60%; }
+        .address-line:nth-child(3) { width: 70%; }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 1000;
+        }
+
+        .popup-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            transform: scale(0.8) translateY(30px);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+        }
+
+        .popup-overlay.active .popup {
+            transform: scale(1) translateY(0);
+        }
+
+        .logo-container {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            border: 3px solid #e9ecef;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-align: center;
+            line-height: 1px;
+            overflow: hidden;
+        }
+
+        .logo-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .popup h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-top: -8px;
+        }
+
+        .sender-name {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-bottom: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(108, 117, 125, 0.2);
+        }
+
+        .close-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .close-btn:active {
+            transform: translateY(0);
+        }
+
+        h1{
+           color: #333;
+            margin-bottom: 50px;
+            font-size: 1.6rem;
+            font-weight: 400; 
+        }
+
+        #messageText{
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- HTML Structure -->
+     
+    <div class="envelope-container" id="envelope">
+        <h1>You've got a message</h1>
+        <div class="envelope">
+            <div class="envelope-body"></div>
+            <div class="envelope-flap"></div>
+            
+            <!-- Stamp Area - Replace src with your stamp image -->
+            <div class="stamp-area" id="stampArea">
+                <img src="logo.png" alt="Stamp" class="stamp-image">
+            </div>
+            
+            <!-- Address Lines for decoration -->
+            <div class="address-lines">
+                <div class="address-line"></div>
+                <div class="address-line"></div>
+                <div class="address-line"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup">
+            <div class="logo-container" id="logoContainer">
+                <img src="logo.png" alt="Logo" class="logo-image"> 
+            </div>
+            
+            <h2>DramaDrop(ed)!</h2>
+            <!--<p>You've successfully opened the envelope! This is your personalized message floating over the transparent background. Customize this text with your own content.</p>-->
+            <div id="messageText"></div>
+            
+            <div class="sender-name" id="senderName">
+                — From: Your Name Here
+            </div>
+            
+            <button class="close-btn" id="closeBtn">Close Message</button>
+        </div>
+    </div>
+
+    <script>
+        
+        const envelope = document.getElementById('envelope');
+        const popupOverlay = document.getElementById('popupOverlay');
+        const closeBtn = document.getElementById('closeBtn');
+        const messageText = document.getElementById('messageText');
+
+       
+        const config = {
+            stampImageUrl: 'logo.png', 
+            logoImageUrl: 'logo.png',  
+            senderName: 'Your Name Here', 
+            messageTitle: 'DramaDrop(ed)!', 
+            messageText: 'You\'ve successfully opened the envelope! This is your personalized message floating over the transparent background. Customize this text with your own content.' // Update message
+        };
+
+        
+        function initializeContent() {
+           
+            if (config.stampImageUrl) {
+                const stampArea = document.getElementById('stampArea');
+                stampArea.innerHTML = `<img src="${config.stampImageUrl}" alt="Stamp" class="stamp-image">`;
+            }
+
+            
+            if (config.logoImageUrl) {
+                const logoContainer = document.getElementById('logoContainer');
+                logoContainer.innerHTML = `<img src="${config.logoImageUrl}" alt="Logo" class="logo-image">`;
+            }
+
+            // Set sender name
+            const senderNameElement = document.getElementById('senderName');
+            senderNameElement.textContent = `— From: ${config.senderName}`;
+
+            
+            const messageTitle = document.querySelector('.popup h2');
+            const messageText = document.querySelector('.popup p');
+            messageTitle.textContent = config.messageTitle;
+            messageText.textContent = config.messageText;
+        }        
+        
+        const codes = {
+            "1234": { message: "Hey, you found my secret note!", sender: "- Alex" },
+            "abcd": { message: "You are amazing, never forget that.", sender: "- Sam" },
+            "zxy1": { message: "Meet me at our spot at 5.", sender: "- Jamie" }
+        };
+
+        envelope.addEventListener('click', function() {
+            const userCode = prompt("Please enter the message id:");
+            if (userCode && codes[userCode]) {
+                
+                messageText.textContent = codes[userCode].message;
+                senderName.textContent = codes[userCode].sender;
+            
+               
+                envelope.classList.add('clicked');
+            
+               
+                setTimeout(() => {
+                    envelope.classList.remove('clicked');
+                }, 600);
+            
+               
+                setTimeout(() => {
+                    popupOverlay.classList.add('active');
+                }, 300);
+
+            
+            } else {
+                alert("Invalid code. Try again!");
+            }
+        });
+
+       
+        function closePopup() {
+            popupOverlay.classList.remove('active');
+        }
+
+
+        
+        closeBtn.addEventListener('click', closePopup);
+
+  
+        popupOverlay.addEventListener('click', function(e) {
+            if (e.target === popupOverlay) {
+                closePopup();
+            }
+        });
+
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && popupOverlay.classList.contains('active')) {
+                closePopup();
+            }
+        });
+        initializeContent();
+
+    </script>
+</body>
+</html>
